@@ -42,6 +42,9 @@ public class User {
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
+
+    @ManyToMany(mappedBy = "favoritedBy")
+    private List<Article> favoritedArticles;
     
     private String bio;
     
