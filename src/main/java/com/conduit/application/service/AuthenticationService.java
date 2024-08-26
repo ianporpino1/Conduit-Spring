@@ -5,13 +5,14 @@ import com.conduit.domain.model.User;
 import com.conduit.infrastructure.security.JwtService;
 import com.conduit.infrastructure.security.UserAuthenticated;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationService {
     private final JwtService jwtService;
     
-
     public AuthenticationService(JwtService jwtService) {
         this.jwtService = jwtService;
         
@@ -21,6 +22,10 @@ public class AuthenticationService {
         String token = jwtService.generateToken(authentication);
         User user = UserAuthenticated.getUser();
         return new UserResponseDto(user.getEmail(), token, user.getUsername(), user.getBio(), user.getImage());
+    }
+
+    public Long extractUserId(Jwt principal) {
+        return jwtService.extractUserId(principal);
     }
     
 }

@@ -1,15 +1,15 @@
 package com.conduit.web.controller;
 
 import com.conduit.application.dto.RegisterUserDto;
+import com.conduit.application.dto.UpdateUserDto;
 import com.conduit.application.dto.UserResponseDto;
 import com.conduit.application.service.AuthenticationService;
 import com.conduit.application.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,26 +26,43 @@ public class UserController {
     }
     
     @PostMapping("users/login")
-    public Map<String, UserResponseDto> authenticate(Authentication authentication){
+    public ResponseEntity<Map<String, UserResponseDto>> authenticate(Authentication authentication){
         UserResponseDto userResponseDto = authenticationService.authenticate(authentication);
         Map<String, UserResponseDto> response = new HashMap<>();
         response.put("user", userResponseDto);
-        return response;
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("users")
-    public Map<String, UserResponseDto> registerUser(@RequestBody RegisterUserDto registerUserDto) throws Exception {
+    public ResponseEntity<Map<String, UserResponseDto>> registerUser(@RequestBody RegisterUserDto registerUserDto) throws Exception {
         System.out.println(registerUserDto);
         UserResponseDto userResponseDto = userService.registerUser(registerUserDto.user());
         Map<String, UserResponseDto> response = new HashMap<>();
         response.put("user", userResponseDto);
-        return response;
+        return ResponseEntity.ok(response);
     }       
     
     
-    @GetMapping("teste")
-    public String teste() {
-        return "teste";
+    @GetMapping("user")
+    public ResponseEntity<Map<String, UserResponseDto>> getCurrentUser(@AuthenticationPrincipal Jwt principal) {
+        UserResponseDto userResponseDto = userService.getCurrentUser(principal);
+        
+        Map<String, UserResponseDto> response = new HashMap<>();
+        response.put("user", userResponseDto);
+        return ResponseEntity.ok(response);
     }
+    
+    @PutMapping("user")
+    public ResponseEntity<Map<String, UserResponseDto>> updateUser(@AuthenticationPrincipal Jwt principal,
+                                                                  @RequestBody UpdateUserDto updateUserDto){
+        
+        UserResponseDto userResponseDto = userService.updateUser(updateUserDto.user(),principal);
+        
+        Map<String, UserResponseDto> response = new HashMap<>();
+        response.put("user", userResponseDto);
+        return ResponseEntity.ok(response);
+    }
+    
+    
 
 }

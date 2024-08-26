@@ -25,9 +25,19 @@ public class User {
     private String username;
     
     @ManyToMany
+    @JoinTable(
+            name = "users_followed_by",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "followed_by_id")
+    )
     private List<User> followedBy;
     
     @ManyToMany
+    @JoinTable(
+            name = "users_following",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "following_id")
+    )
     private List<User> following;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
