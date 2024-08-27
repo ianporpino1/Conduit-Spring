@@ -1,6 +1,5 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.UserResponseDto;
 import com.conduit.application.dto.article.ArticleDto;
 import com.conduit.application.dto.article.ArticleRequestDto;
 import com.conduit.application.dto.article.ArticlesResponseDto;
@@ -41,10 +40,30 @@ public class ArticleController {
     @PostMapping("/articles")
     public ResponseEntity<Map<String, ArticleDto>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
                                     @AuthenticationPrincipal Jwt principal){
-
         ArticleDto articleDto = articleService.createArticle(articleRequestDto,principal);
+        
         Map<String, ArticleDto> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/articles/{slug}")
+    public ResponseEntity<Map<String, ArticleDto>> getArticleFromSlug(@PathVariable String slug,
+                                                                      @AuthenticationPrincipal Jwt principal){
+        ArticleDto articleDto = articleService.getArticleFromSlug(slug,principal);
+        
+        Map<String, ArticleDto> response = new HashMap<>();
+        response.put("article", articleDto);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/articles/feed")
+    public ArticlesResponseDto getArticlesFeed(@RequestParam(value = "limit", defaultValue = "20") int limit,
+                                               @RequestParam(value = "offset", defaultValue = "0") int offset,
+                                               @AuthenticationPrincipal Jwt principal){
+        Pageable pageable = PageRequest.of(offset / limit, limit, 
+                Sort.by(Sort.Order.desc("createdAt")));
+        
+        return articleService.getFeedArticles(principal,pageable);
+    } 
 }

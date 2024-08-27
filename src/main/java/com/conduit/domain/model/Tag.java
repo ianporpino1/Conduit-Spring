@@ -15,7 +15,7 @@ public class Tag {
 
     private String name;
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "tagList")
     private List<Article> articles;
     
 }

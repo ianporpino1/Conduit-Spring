@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
@@ -34,5 +35,16 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     Long countArticles(@Param("tag") String tag,
                        @Param("author") String author,
                        @Param("favorited") String favorited);
+
+    @Query("SELECT COUNT(a) FROM Article a WHERE a.author.id IN :authorIds")
+    Long countArticlesByFollowingUsers(@Param("authorIds") List<Long> authorIds);
+
+
+    @Query("SELECT a FROM Article a WHERE a.author.id IN :authorIds ORDER BY a.createdAt DESC")
+    Page<Article> findArticlesByFollowingUsersIds(@Param("authorIds") List<Long> authorIds, Pageable pageable);
+    
+    Optional<Article> findArticleBySlug(String slug);
+
+    Optional<Article> findBySlug(String slug);
     
 }

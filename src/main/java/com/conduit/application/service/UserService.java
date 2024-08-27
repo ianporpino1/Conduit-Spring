@@ -3,6 +3,8 @@ package com.conduit.application.service;
 import com.conduit.application.dto.ProfileDto;
 import com.conduit.application.dto.UserDto;
 import com.conduit.application.dto.UserResponseDto;
+import com.conduit.application.exception.UserAlreadyExistsException;
+import com.conduit.application.exception.UserNotFoundException;
 import com.conduit.domain.model.User;
 import com.conduit.domain.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,9 +30,13 @@ public class UserService {
         this.configuration = configuration;
     }
     
-    public UserResponseDto registerUser(UserDto userDto) throws Exception { 
-        userRepository.findUserByEmail(userDto.email())
-                .orElseThrow(() -> new RuntimeException("User with this email already exists.")); //UserAlreadyExistsException
+    public UserResponseDto registerUser(UserDto userDto) throws Exception {
+        if (userRepository.findUserByEmail(userDto.email()).isPresent()) {
+            throw new UserAlreadyExistsException("User with this email already exists.");
+        }
+        if (userRepository.findUserByUsername(userDto.username()).isPresent()) {
+            throw new UserAlreadyExistsException("User with this username already exists.");
+        }
         
         User user = new User();
         user.setUsername(userDto.username());
@@ -48,7 +54,7 @@ public class UserService {
     public UserResponseDto getCurrentUser(Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
         return new UserResponseDto(user.getEmail(), principal.getTokenValue(), user.getUsername(), user.getBio(), user.getImage());
     }
     
@@ -56,18 +62,23 @@ public class UserService {
     public UserResponseDto updateUser(UserDto userDto, Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User oldUser  = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
+        System.out.println(userDto.email());
+        System.out.println(oldUser.getEmail());
 
         if (userDto.email() != null && !userDto.email().equals(oldUser.getEmail())) {
-            userRepository.findUserByEmail(userDto.email())
-                    .orElseThrow(() -> new RuntimeException("Email is already in use by another user"));
-            
+            User existingUser = userRepository.findUserByEmail(userDto.email())
+                    .orElse(null);
+            if (existingUser != null && !existingUser.getId().equals(oldUser.getId())) {
+                throw new UserAlreadyExistsException("Email is already in use by another user");
+            }
+
             oldUser.setEmail(userDto.email());
         }
 
         if (userDto.username() != null && !userDto.username().equals(oldUser.getUsername())) {
             userRepository.findUserByUsername(userDto.username())
-                    .orElseThrow(() -> new RuntimeException("Username is already in use by another user"));
+                    .orElseThrow(() -> new UserAlreadyExistsException("Username is already in use by another user"));
             
             oldUser.setUsername(userDto.username());
         }
@@ -94,35 +105,40 @@ public class UserService {
     
     public User getUserByUsername(String username){
         return userRepository.findUserByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
     }
 
     public User getUserById(Long id){
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
     }
 
     public List<User> getFollowing(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
         return user.getFollowing();
     }
 
     public List<User> getFollowedBy(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
         return user.getFollowedBy();
     }
 
     public boolean isFollowing(Jwt currentUserJwt, Long searchedUserId) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
-        User currentUser = userRepository.findById(currentUserId).orElseThrow(() -> new RuntimeException("User not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(UserNotFoundException::new);
         return currentUser.getFollowing().stream()
                 .anyMatch(user -> user.getId().equals(searchedUserId));
     }
 
     public ProfileDto followUser(Jwt currentUserJwt, String followedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
-        User currentUser = userRepository.findById(currentUserId).orElseThrow(() -> new RuntimeException("User not found"));
-        User followedUser = userRepository.findUserByUsername(followedUsername).orElseThrow(() -> new RuntimeException("User to follow not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(UserNotFoundException::new);
+        User followedUser = userRepository.findUserByUsername(followedUsername)
+                .orElseThrow(() -> new UserNotFoundException("User to follow not found"));
 
         currentUser.getFollowing().add(followedUser);
         followedUser.getFollowedBy().add(currentUser);
@@ -136,8 +152,10 @@ public class UserService {
 
     public ProfileDto unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
-        User currentUser = userRepository.findById(currentUserId).orElseThrow(() -> new RuntimeException("User not found"));
-        User unfollowedUser = userRepository.findUserByUsername(unfollowedUsername).orElseThrow(() -> new RuntimeException("User to unfollow not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(UserNotFoundException::new);
+        User unfollowedUser = userRepository.findUserByUsername(unfollowedUsername)
+                .orElseThrow(() -> new UserNotFoundException("User to unfollow not found"));
 
         currentUser.getFollowing().remove(unfollowedUser);
         unfollowedUser.getFollowedBy().remove(currentUser);

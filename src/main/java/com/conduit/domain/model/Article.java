@@ -31,7 +31,7 @@ public class Article {
 
     private String body;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "article_tags", 
             joinColumns = @JoinColumn(name = "article_id"), 

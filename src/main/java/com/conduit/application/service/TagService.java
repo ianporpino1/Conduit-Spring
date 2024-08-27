@@ -5,7 +5,9 @@ import com.conduit.domain.repository.TagRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TagService {
@@ -25,5 +27,16 @@ public class TagService {
             newTag.setName(tagName);
             return tagRepository.save(newTag);
         }
+    }
+    
+    public List<String> getTags(){
+        return tagRepository.findAllTags()
+                .orElseThrow(()-> new RuntimeException("tag not found"))
+                .stream()
+                .map(this::convertToTagName) 
+                .collect(Collectors.toList());
+    }
+    private String convertToTagName(Tag tag) {
+        return tag.getName();
     }
 }

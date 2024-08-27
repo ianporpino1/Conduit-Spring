@@ -11,11 +11,8 @@ import java.time.Instant;
 public class JwtService {
     private final JwtEncoder encoder;
 
-    private final JwtDecoder decoder;
-
-    public JwtService(JwtEncoder encoder, JwtDecoder decoder) {
+    public JwtService(JwtEncoder encoder) {
         this.encoder = encoder;
-        this.decoder = decoder;
     }
 
     public String generateToken(Authentication authentication) {
