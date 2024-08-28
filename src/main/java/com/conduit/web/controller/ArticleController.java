@@ -62,7 +62,7 @@ public class ArticleController {
         Pageable pageable = PageRequest.of(offset / limit, limit, 
                 Sort.by(Sort.Order.desc("createdAt")));
         
-        return articleService.getFeedArticles(principal,pageable);
+        return articleService.getArticlesFeed(principal,pageable);
     }
     
     @PutMapping("/articles/{slug}")
@@ -80,4 +80,26 @@ public class ArticleController {
     public void deleteArticle(@PathVariable String slug, @AuthenticationPrincipal Jwt principal){
         articleService.deleteArticle(slug, principal);
     }
+    
+    @PostMapping("/articles/{slug}/favorite")
+    public ResponseEntity<Map<String, SingleArticleDto>> favoriteArticle(@PathVariable String slug, 
+                                                                         @AuthenticationPrincipal Jwt principal){
+        SingleArticleDto articleDto = articleService.addFavoriteArticle(slug,principal);
+
+        Map<String, SingleArticleDto> response = new HashMap<>();
+        response.put("article", articleDto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/articles/{slug}/favorite")
+    public ResponseEntity<Map<String, SingleArticleDto>> unfavoriteArticle(@PathVariable String slug,
+                                                                         @AuthenticationPrincipal Jwt principal){
+        SingleArticleDto articleDto = articleService.deleteFavoriteArticle(slug,principal);
+
+        Map<String, SingleArticleDto> response = new HashMap<>();
+        response.put("article", articleDto);
+        return ResponseEntity.ok(response);
+    }
+    
+    
 }

@@ -1,6 +1,6 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.ProfileDto;
+import com.conduit.application.dto.profile.ProfileDto;
 import com.conduit.application.dto.UserDto;
 import com.conduit.application.dto.UserResponseDto;
 import com.conduit.application.exception.UserAlreadyExistsException;
@@ -63,8 +63,6 @@ public class UserService {
         Long userId = authenticationService.extractUserId(principal);
         User oldUser  = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        System.out.println(userDto.email());
-        System.out.println(oldUser.getEmail());
 
         if (userDto.email() != null && !userDto.email().equals(oldUser.getEmail())) {
             User existingUser = userRepository.findUserByEmail(userDto.email())
@@ -164,5 +162,9 @@ public class UserService {
         userRepository.save(unfollowedUser);
         Boolean isFollowing = false;
         return new ProfileDto(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
+    }
+
+    public void save(User user) {
+        userRepository.save(user);
     }
 }

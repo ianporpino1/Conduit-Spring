@@ -1,6 +1,6 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.ProfileDto;
+import com.conduit.application.dto.profile.ProfileDto;
 import com.conduit.domain.model.User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;

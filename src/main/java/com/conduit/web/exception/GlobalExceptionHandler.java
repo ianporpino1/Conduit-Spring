@@ -1,9 +1,6 @@
 package com.conduit.web.exception;
 
-import com.conduit.application.exception.ArticleNotFoundException;
-import com.conduit.application.exception.SlugAlreadyExistsException;
-import com.conduit.application.exception.UserAlreadyExistsException;
-import com.conduit.application.exception.UserNotFoundException;
+import com.conduit.application.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +35,20 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
     public ErrorResponse handleUserNotFoundException(UserNotFoundException ex) {
+        return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(ArticleAlreadyFavoritedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public ErrorResponse handleArticleAlreadyFavoritedException(ArticleAlreadyFavoritedException ex) {
+        return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(ArticleAlreadyUnfavoritedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public ErrorResponse handleArticleAlreadyUnfavoritedException(ArticleAlreadyUnfavoritedException ex) {
         return new ErrorResponse(ex.getMessage());
     }
 

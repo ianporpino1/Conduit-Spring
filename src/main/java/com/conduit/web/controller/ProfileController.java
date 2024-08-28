@@ -1,6 +1,6 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.ProfileDto;
+import com.conduit.application.dto.profile.ProfileDto;
 import com.conduit.application.service.ProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

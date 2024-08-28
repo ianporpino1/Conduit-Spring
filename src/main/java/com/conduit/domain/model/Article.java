@@ -53,7 +53,7 @@ public class Article {
             joinColumns = @JoinColumn(name = "article_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<User> favoritedBy = new ArrayList<>();;
+    private List<User> favoritedBy = new ArrayList<>();
 
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;

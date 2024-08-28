@@ -1,7 +1,7 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.RegisterUserDto;
-import com.conduit.application.dto.UpdateUserDto;
+import com.conduit.application.dto.user.RegisterUserDto;
+import com.conduit.application.dto.user.UpdateUserDto;
 import com.conduit.application.dto.UserResponseDto;
 import com.conduit.application.service.AuthenticationService;
 import com.conduit.application.service.UserService;
