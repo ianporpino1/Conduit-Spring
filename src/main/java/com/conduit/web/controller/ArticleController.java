@@ -1,8 +1,6 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.article.ArticleDto;
-import com.conduit.application.dto.article.ArticleRequestDto;
-import com.conduit.application.dto.article.ArticlesResponseDto;
+import com.conduit.application.dto.article.*;
 import com.conduit.application.service.ArticleService;
 
 import org.springframework.data.domain.PageRequest;
@@ -38,21 +36,21 @@ public class ArticleController {
     }
     
     @PostMapping("/articles")
-    public ResponseEntity<Map<String, ArticleDto>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
-                                    @AuthenticationPrincipal Jwt principal){
-        ArticleDto articleDto = articleService.createArticle(articleRequestDto,principal);
+    public ResponseEntity<Map<String, SingleArticleDto>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
+                                                                          @AuthenticationPrincipal Jwt principal){
+        SingleArticleDto articleDto = articleService.createArticle(articleRequestDto,principal);
         
-        Map<String, ArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDto> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/articles/{slug}")
-    public ResponseEntity<Map<String, ArticleDto>> getArticleFromSlug(@PathVariable String slug,
-                                                                      @AuthenticationPrincipal Jwt principal){
-        ArticleDto articleDto = articleService.getArticleFromSlug(slug,principal);
+    public ResponseEntity<Map<String, SingleArticleDto>> getArticleFromSlug(@PathVariable String slug,
+                                                                               @AuthenticationPrincipal Jwt principal){
+        SingleArticleDto articleDto = articleService.getArticleFromSlug(slug,principal);
         
-        Map<String, ArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDto> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
@@ -65,5 +63,16 @@ public class ArticleController {
                 Sort.by(Sort.Order.desc("createdAt")));
         
         return articleService.getFeedArticles(principal,pageable);
-    } 
+    }
+    
+    @PutMapping("/articles/{slug}")
+    public ResponseEntity<Map<String, SingleArticleDto>> updateArticle(@PathVariable String slug,
+                                                                          UpdateArticleDto updateArticleDto,
+                                                                          @AuthenticationPrincipal Jwt principal){
+        SingleArticleDto updatedArticleDto = articleService.updateArticle(slug, updateArticleDto, principal);
+
+        Map<String, SingleArticleDto> response = new HashMap<>();
+        response.put("article", updatedArticleDto);
+        return ResponseEntity.ok(response);
+    }
 }
