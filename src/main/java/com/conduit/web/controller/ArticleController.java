@@ -75,4 +75,9 @@ public class ArticleController {
         response.put("article", updatedArticleDto);
         return ResponseEntity.ok(response);
     }
+    
+    @DeleteMapping("/articles/{slug}")
+    public void deleteArticle(@PathVariable String slug, @AuthenticationPrincipal Jwt principal){
+        articleService.deleteArticle(slug, principal);
+    }
 }

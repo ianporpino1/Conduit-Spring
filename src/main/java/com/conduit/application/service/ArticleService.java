@@ -208,4 +208,15 @@ public class ArticleService {
                 isFollowing
         );
     }
+
+    public void deleteArticle(String slug, Jwt currentUserJwt) {
+        Article articleToBeDeleted = articleRepository.findArticleBySlug(slug)
+                .orElseThrow(ArticleNotFoundException::new);
+        Long currentUserId = authenticationService.extractUserId(currentUserJwt);
+        if(!Objects.equals(articleToBeDeleted.getAuthor().getId(), currentUserId)){
+            throw new RuntimeException("User is not the author of this article");
+        }
+        
+        articleRepository.delete(articleToBeDeleted);
+    }
 }
