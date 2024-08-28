@@ -43,7 +43,7 @@ public class UserService {
         user.setEmail(userDto.email());
         user.setPassword(passwordEncoder.encode(userDto.password()));
 
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
         
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDto.email(), userDto.password());
         Authentication authenticated = configuration.getAuthenticationManager().authenticate(authentication);

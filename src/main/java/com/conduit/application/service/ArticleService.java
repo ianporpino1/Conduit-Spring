@@ -204,7 +204,7 @@ public class ArticleService {
         );
     }
 
-    private AuthorDto convertAuthorToDto(User author, boolean isFollowing) {
+    public AuthorDto convertAuthorToDto(User author, boolean isFollowing) {
         return new AuthorDto(
                 author.getUsername(),
                 author.getBio(),
@@ -263,5 +263,14 @@ public class ArticleService {
         articleRepository.save(articleToBeUnfavorited);
 
         return convertArticleToSingleDto(articleToBeUnfavorited, currentUserId,currentUserId);
+    }
+
+    public Article findArticleBySlug(String slug){
+        return articleRepository.findArticleBySlug(slug)
+                .orElseThrow(ArticleNotFoundException::new);
+    }
+
+    public Article save(Article article) {
+        return articleRepository.save(article);
     }
 }

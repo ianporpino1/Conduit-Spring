@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,"/api/users/login", "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/{slug}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/articles/{slug}/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profiles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tags").permitAll()
