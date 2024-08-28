@@ -1,6 +1,7 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.UserResponseDTO;
+
+import com.conduit.application.dto.user.UserResponseDTO;
 import com.conduit.domain.model.User;
 import com.conduit.infrastructure.security.JwtService;
 import com.conduit.infrastructure.security.UserAuthenticated;

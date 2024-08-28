@@ -2,7 +2,7 @@ package com.conduit.web.controller;
 
 import com.conduit.application.dto.user.RegisterUserDTO;
 import com.conduit.application.dto.user.UpdateUserDTO;
-import com.conduit.application.dto.UserResponseDTO;
+import com.conduit.application.dto.user.UserResponseDTO;
 import com.conduit.application.service.AuthenticationService;
 import com.conduit.application.service.UserService;
 import org.springframework.http.ResponseEntity;
