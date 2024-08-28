@@ -36,21 +36,21 @@ public class ArticleController {
     }
     
     @PostMapping("/articles")
-    public ResponseEntity<Map<String, SingleArticleDto>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
-                                                                          @AuthenticationPrincipal Jwt principal){
-        SingleArticleDto articleDto = articleService.createArticle(articleRequestDto,principal);
+    public ResponseEntity<Map<String, SingleArticleDTO>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
+                                                                       @AuthenticationPrincipal Jwt principal){
+        SingleArticleDTO articleDto = articleService.createArticle(articleRequestDto,principal);
         
-        Map<String, SingleArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDTO> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/articles/{slug}")
-    public ResponseEntity<Map<String, SingleArticleDto>> getArticleFromSlug(@PathVariable String slug,
-                                                                               @AuthenticationPrincipal Jwt principal){
-        SingleArticleDto articleDto = articleService.getArticleFromSlug(slug,principal);
+    public ResponseEntity<Map<String, SingleArticleDTO>> getArticleFromSlug(@PathVariable String slug,
+                                                                            @AuthenticationPrincipal Jwt principal){
+        SingleArticleDTO articleDto = articleService.getArticleFromSlug(slug,principal);
         
-        Map<String, SingleArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDTO> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
@@ -66,12 +66,12 @@ public class ArticleController {
     }
     
     @PutMapping("/articles/{slug}")
-    public ResponseEntity<Map<String, SingleArticleDto>> updateArticle(@PathVariable String slug,
-                                                                          UpdateArticleDto updateArticleDto,
-                                                                          @AuthenticationPrincipal Jwt principal){
-        SingleArticleDto updatedArticleDto = articleService.updateArticle(slug, updateArticleDto, principal);
+    public ResponseEntity<Map<String, SingleArticleDTO>> updateArticle(@PathVariable String slug,
+                                                                       UpdateArticleDTO updateArticleDto,
+                                                                       @AuthenticationPrincipal Jwt principal){
+        SingleArticleDTO updatedArticleDto = articleService.updateArticle(slug, updateArticleDto, principal);
 
-        Map<String, SingleArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDTO> response = new HashMap<>();
         response.put("article", updatedArticleDto);
         return ResponseEntity.ok(response);
     }
@@ -82,21 +82,21 @@ public class ArticleController {
     }
     
     @PostMapping("/articles/{slug}/favorite")
-    public ResponseEntity<Map<String, SingleArticleDto>> favoriteArticle(@PathVariable String slug, 
+    public ResponseEntity<Map<String, SingleArticleDTO>> favoriteArticle(@PathVariable String slug,
                                                                          @AuthenticationPrincipal Jwt principal){
-        SingleArticleDto articleDto = articleService.addFavoriteArticle(slug,principal);
+        SingleArticleDTO articleDto = articleService.addFavoriteArticle(slug,principal);
 
-        Map<String, SingleArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDTO> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/articles/{slug}/favorite")
-    public ResponseEntity<Map<String, SingleArticleDto>> unfavoriteArticle(@PathVariable String slug,
-                                                                         @AuthenticationPrincipal Jwt principal){
-        SingleArticleDto articleDto = articleService.deleteFavoriteArticle(slug,principal);
+    public ResponseEntity<Map<String, SingleArticleDTO>> unfavoriteArticle(@PathVariable String slug,
+                                                                           @AuthenticationPrincipal Jwt principal){
+        SingleArticleDTO articleDto = articleService.deleteFavoriteArticle(slug,principal);
 
-        Map<String, SingleArticleDto> response = new HashMap<>();
+        Map<String, SingleArticleDTO> response = new HashMap<>();
         response.put("article", articleDto);
         return ResponseEntity.ok(response);
     }

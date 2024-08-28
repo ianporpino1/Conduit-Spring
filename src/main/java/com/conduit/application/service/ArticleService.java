@@ -1,10 +1,7 @@
 package com.conduit.application.service;
 
 import com.conduit.application.dto.article.*;
-import com.conduit.application.exception.ArticleAlreadyFavoritedException;
-import com.conduit.application.exception.ArticleAlreadyUnfavoritedException;
-import com.conduit.application.exception.ArticleNotFoundException;
-import com.conduit.application.exception.SlugAlreadyExistsException;
+import com.conduit.application.exception.*;
 import com.conduit.domain.model.Article;
 import com.conduit.domain.model.Tag;
 import com.conduit.domain.model.User;
@@ -20,6 +17,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ArticleService {
@@ -41,29 +39,24 @@ public class ArticleService {
         
         Long totalArticlesCount = articleRepository.countArticles(tag, author, favorited);
 
-        Long currentUserId;
-        if(currentUserJwt != null) {
-            currentUserId = authenticationService.extractUserId(currentUserJwt);
-        } else {
-            currentUserId = null;
-        }
+        Long currentUserId = Optional.ofNullable(currentUserJwt)
+                .map(authenticationService::extractUserId)
+                .orElse(null);
 
-        Long filterUserId;
-        if(favorited != null){
-            filterUserId = userService.getUserByUsername(favorited).getId();
-        }else {
-            filterUserId = null;
-        }
+        Long filterUserId = Optional.ofNullable(favorited)
+                .map(userService::getUserByUsername)
+                .map(User::getId)
+                .orElse(null);
 
-        List<MultipleArticlesDto> multipleArticlesDtos = articlesPage.getContent().stream()
+        List<MultipleArticlesDTO> multipleArticlesDTOS = articlesPage.getContent().stream()
                 .map(article -> convertArticleToDto(article, filterUserId,currentUserId))
                 .toList();
         
-        return new ArticlesResponseDto(multipleArticlesDtos, totalArticlesCount);
+        return new ArticlesResponseDto(multipleArticlesDTOS, totalArticlesCount);
     }
     
     @Transactional
-    public SingleArticleDto createArticle(ArticleRequestDto articleRequestDto, Jwt currentUserJwt){
+    public SingleArticleDTO createArticle(ArticleRequestDto articleRequestDto, Jwt currentUserJwt){
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User user = userService.getUserById(currentUserId);
         
@@ -90,9 +83,6 @@ public class ArticleService {
         newArticle.setTagList(tags);
         
         Article savedArticle = articleRepository.save(newArticle);
-        
-        boolean isFollowing = false;
-        convertAuthorToDto(user, isFollowing);
 
         return convertArticleToSingleDto(savedArticle, user.getId(), user.getId());
     }
@@ -115,64 +105,71 @@ public class ArticleService {
         
         Long articlesCount = articleRepository.countArticlesByFollowingUsers(followingIds);
 
-        List<MultipleArticlesDto> multipleArticlesDtos = articlesPage.getContent().stream()
+        List<MultipleArticlesDTO> multipleArticlesDTOS = articlesPage.getContent().stream()
                 .map(article -> convertArticleToDto(article, currentUserId, currentUserId))
                 .toList();
 
-        return new ArticlesResponseDto(multipleArticlesDtos, articlesCount);
+        return new ArticlesResponseDto(multipleArticlesDTOS, articlesCount);
     }
     
     @Transactional
-    public SingleArticleDto updateArticle(String slug, UpdateArticleDto updateArticleDto, Jwt currentUserJwt){
+    public SingleArticleDTO updateArticle(String slug, UpdateArticleDTO updateArticleDto, Jwt currentUserJwt){
         Article oldArticle = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         if(!Objects.equals(oldArticle.getAuthor().getId(), currentUserId)){
-            throw new RuntimeException("User is not the author of this article");
+            throw new UnauthorizedArticleException("User is not the author of this article");
         }
-        
-        boolean isModified = false;
-        if(updateArticleDto.title() != null){
-            oldArticle.setTitle(updateArticleDto.title());
-            String newSlug = createSlug(updateArticleDto.title());
-            oldArticle.setSlug(newSlug);
-            isModified = true;
-        }
-        if(updateArticleDto.description() != null){
-            oldArticle.setDescription(updateArticleDto.description());
-            isModified = true;
-        }
-        if(updateArticleDto.body() != null){
-            oldArticle.setBody(updateArticleDto.body());
-            isModified = true;
-        }
+
+        boolean isModified = updateArticleFields(oldArticle, updateArticleDto);
         if (isModified) {
             oldArticle.setUpdatedAt(Instant.now());
+            articleRepository.save(oldArticle);
         }
+        
         articleRepository.save(oldArticle);
         return convertArticleToSingleDto(oldArticle, currentUserId,currentUserId);
     }
+
+    private boolean updateArticleFields(Article article, UpdateArticleDTO updateArticleDto) {
+        boolean isModified = false;
+
+        if (updateArticleDto.title() != null) {
+            article.setTitle(updateArticleDto.title());
+            article.setSlug(createSlug(updateArticleDto.title()));
+            isModified = true;
+        }
+
+        if (updateArticleDto.description() != null) {
+            article.setDescription(updateArticleDto.description());
+            isModified = true;
+        }
+
+        if (updateArticleDto.body() != null) {
+            article.setBody(updateArticleDto.body());
+            isModified = true;
+        }
+
+        return isModified;
+    }
     
-    public SingleArticleDto getArticleFromSlug(String slug, Jwt currentUserJwt){
+    public SingleArticleDTO getArticleFromSlug(String slug, Jwt currentUserJwt){
         Article article = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
-        
-        Long currentUserId;
-        if(currentUserJwt != null) {
-            currentUserId = authenticationService.extractUserId(currentUserJwt);
-        } else {
-            currentUserId = null;
-        }
+
+        Long currentUserId = Optional.ofNullable(currentUserJwt)
+                .map(authenticationService::extractUserId)
+                .orElse(null);
         return convertArticleToSingleDto(article, currentUserId,currentUserId);
     }
 
-    private MultipleArticlesDto convertArticleToDto(Article article, Long filterUserId, Long currentUserId) {
+    private MultipleArticlesDTO convertArticleToDto(Article article, Long filterUserId, Long currentUserId) {
         boolean isFavorited = filterUserId != null && article.getFavoritedBy().stream()
                 .anyMatch(user -> user.getId().equals(filterUserId));
         boolean isFollowing = currentUserId != null && article.getAuthor().getFollowedBy().stream()
                 .anyMatch(follower -> follower.getId().equals(currentUserId));
 
-        return new MultipleArticlesDto(
+        return new MultipleArticlesDTO(
                 article.getSlug(),
                 article.getTitle(),
                 article.getDescription(),
@@ -184,13 +181,13 @@ public class ArticleService {
                 convertAuthorToDto(article.getAuthor(), isFollowing) 
         );
     }
-    private SingleArticleDto convertArticleToSingleDto(Article article, Long filterUserId, Long currentUserId) {
+    private SingleArticleDTO convertArticleToSingleDto(Article article, Long filterUserId, Long currentUserId) {
         boolean isFavorited = filterUserId != null && article.getFavoritedBy().stream()
                 .anyMatch(user -> user.getId().equals(filterUserId));
         boolean isFollowing = currentUserId != null && article.getAuthor().getFollowedBy().stream()
                 .anyMatch(follower -> follower.getId().equals(currentUserId));
 
-        return new SingleArticleDto(
+        return new SingleArticleDTO(
                 article.getSlug(),
                 article.getTitle(),
                 article.getDescription(),
@@ -204,8 +201,8 @@ public class ArticleService {
         );
     }
 
-    public AuthorDto convertAuthorToDto(User author, boolean isFollowing) {
-        return new AuthorDto(
+    public AuthorDTO convertAuthorToDto(User author, boolean isFollowing) {
+        return new AuthorDTO(
                 author.getUsername(),
                 author.getBio(),
                 author.getImage(),
@@ -218,14 +215,14 @@ public class ArticleService {
                 .orElseThrow(ArticleNotFoundException::new);
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         if(!Objects.equals(articleToBeDeleted.getAuthor().getId(), currentUserId)){
-            throw new RuntimeException("User is not the author of this article");
+            throw new UnauthorizedArticleException("User is not the author of this article");
         }
         
         articleRepository.delete(articleToBeDeleted);
     }
     
     @Transactional
-    public SingleArticleDto addFavoriteArticle(String slug, Jwt currentUserJwt) {
+    public SingleArticleDTO addFavoriteArticle(String slug, Jwt currentUserJwt) {
         Article articleToBeFavorited = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
         
@@ -239,14 +236,13 @@ public class ArticleService {
         currentUser.getFavoritedArticles().add(articleToBeFavorited);
         articleToBeFavorited.getFavoritedBy().add(currentUser);
         
-        userService.save(currentUser);
         articleRepository.save(articleToBeFavorited);
         
         return convertArticleToSingleDto(articleToBeFavorited, currentUserId,currentUserId);
     }
     
     @Transactional
-    public SingleArticleDto deleteFavoriteArticle(String slug, Jwt currentUserJwt) {
+    public SingleArticleDTO deleteFavoriteArticle(String slug, Jwt currentUserJwt) {
         Article articleToBeUnfavorited = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
 
@@ -258,9 +254,6 @@ public class ArticleService {
         }
         currentUser.getFavoritedArticles().remove(articleToBeUnfavorited);
         articleToBeUnfavorited.getFavoritedBy().remove(currentUser);
-
-        userService.save(currentUser);
-        articleRepository.save(articleToBeUnfavorited);
 
         return convertArticleToSingleDto(articleToBeUnfavorited, currentUserId,currentUserId);
     }

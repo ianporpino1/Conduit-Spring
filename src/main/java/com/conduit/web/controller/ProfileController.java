@@ -1,6 +1,6 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.profile.ProfileDto;
+import com.conduit.application.dto.profile.ProfileDTO;
 import com.conduit.application.service.ProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,31 +20,31 @@ public class ProfileController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<Map<String, ProfileDto>> getProfile(@AuthenticationPrincipal Jwt principal, 
+    public ResponseEntity<Map<String, ProfileDTO>> getProfile(@AuthenticationPrincipal Jwt principal,
                                                               @PathVariable String username){
-        ProfileDto profileDto = profileService.getProfile(username, principal);
+        ProfileDTO profileDto = profileService.getProfile(username, principal);
 
-        Map<String, ProfileDto> response = new HashMap<>();
+        Map<String, ProfileDTO> response = new HashMap<>();
         response.put("profile", profileDto);
         return ResponseEntity.ok(response);
     }
     
     @PostMapping("/{usernameToFollow}/follow")
-    public ResponseEntity<Map<String, ProfileDto>> followUserProfile(@AuthenticationPrincipal Jwt principal,
-                                                              @PathVariable String usernameToFollow){
-        ProfileDto followedProfileDto = profileService.followUserProfile(principal, usernameToFollow);
+    public ResponseEntity<Map<String, ProfileDTO>> followUserProfile(@AuthenticationPrincipal Jwt principal,
+                                                                     @PathVariable String usernameToFollow){
+        ProfileDTO followedProfileDTO = profileService.followUserProfile(principal, usernameToFollow);
 
-        Map<String, ProfileDto> response = new HashMap<>();
-        response.put("profile", followedProfileDto);
+        Map<String, ProfileDTO> response = new HashMap<>();
+        response.put("profile", followedProfileDTO);
         return ResponseEntity.ok(response);
     }
     
     @DeleteMapping("/{usernameToUnfollow}/follow")
-    public ResponseEntity<Map<String, ProfileDto>> unfollowUserProfile(@AuthenticationPrincipal Jwt principal,
+    public ResponseEntity<Map<String, ProfileDTO>> unfollowUserProfile(@AuthenticationPrincipal Jwt principal,
                                                                        @PathVariable String usernameToUnfollow){
-        ProfileDto unfollowedProfileDto = profileService.unfollowUserProfile(principal, usernameToUnfollow);
-        Map<String, ProfileDto> response = new HashMap<>();
-        response.put("profile", unfollowedProfileDto);
+        ProfileDTO unfollowedProfileDTO = profileService.unfollowUserProfile(principal, usernameToUnfollow);
+        Map<String, ProfileDTO> response = new HashMap<>();
+        response.put("profile", unfollowedProfileDTO);
         return ResponseEntity.ok(response);
     }
 }

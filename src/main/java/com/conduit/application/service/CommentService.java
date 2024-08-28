@@ -4,7 +4,9 @@ import com.conduit.application.dto.comment.CommentDTO;
 import com.conduit.application.dto.comment.CommentRequestDTO;
 import com.conduit.application.dto.comment.MultipleCommentsResponseDTO;
 import com.conduit.application.dto.comment.SingleCommentResponseDTO;
-import com.conduit.application.exception.SlugAlreadyExistsException;
+import com.conduit.application.exception.CommentNotFoundException;
+import com.conduit.application.exception.InvalidInputException;
+import com.conduit.application.exception.UnauthorizedActionException;
 import com.conduit.domain.model.Article;
 import com.conduit.domain.model.Comment;
 import com.conduit.domain.model.User;
@@ -16,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -34,8 +36,8 @@ public class CommentService {
 
     @Transactional
     public SingleCommentResponseDTO createComment(String slug, CommentRequestDTO commentRequestDTO, Jwt currentUserJwt){
-        if(commentRequestDTO == null){
-            throw new RuntimeException("comment cant be null");
+        if(commentRequestDTO.body().isBlank()){
+            throw new InvalidInputException("comment cannot be empty");
         }
         
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
@@ -54,8 +56,6 @@ public class CommentService {
         user.getComments().add(comment);
 
         Comment savedComment = commentRepository.save(comment);
-        Article savedArticle = articleService.save(article);
-        userService.save(user);
 
         CommentDTO commentDTO = convertCommentToDTO(savedComment, currentUserId);
         
@@ -76,31 +76,28 @@ public class CommentService {
     }
 
     public MultipleCommentsResponseDTO getAllComments(String slug, Jwt currentUserJwt) {
-        Long currentUserId;
-        if(currentUserJwt != null) {
-            currentUserId = authenticationService.extractUserId(currentUserJwt);
-        } else {
-            currentUserId = null;
-        }
+        Long currentUserId = Optional.ofNullable(currentUserJwt)
+                .map(authenticationService::extractUserId)
+                .orElse(null);
         
         List<CommentDTO> commentDTOS =  articleService.findArticleBySlug(slug).getComments().stream()
-                .map(comment -> convertCommentToDTO(comment, currentUserId)).toList();
+                .map(comment -> convertCommentToDTO(comment, currentUserId))
+                .toList();
         return new MultipleCommentsResponseDTO(commentDTOS);
     }
     
     @Transactional
     public void deleteComment(String slug, Long id, Jwt currentUserJwt) {
         Comment commentToBeDeleted = commentRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Comment not found"));
+                .orElseThrow(CommentNotFoundException::new);
 
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User user = userService.getUserById(currentUserId);
         
         if (!commentToBeDeleted.getAuthor().getUsername().equals(user.getUsername())) {
-            throw new RuntimeException("Can't delete. User is not the author of the comment");
+            throw new UnauthorizedActionException("Can't delete. User is not the author of the comment");
         }
         
         commentRepository.delete(commentToBeDeleted);
-        
     }
 }

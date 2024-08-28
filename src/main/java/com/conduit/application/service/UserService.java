@@ -1,8 +1,9 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.profile.ProfileDto;
-import com.conduit.application.dto.UserDto;
-import com.conduit.application.dto.UserResponseDto;
+import com.conduit.application.dto.profile.ProfileDTO;
+
+import com.conduit.application.dto.UserResponseDTO;
+import com.conduit.application.dto.user.UserDTO;
 import com.conduit.application.exception.UserAlreadyExistsException;
 import com.conduit.application.exception.UserNotFoundException;
 import com.conduit.domain.model.User;
@@ -15,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -30,7 +32,7 @@ public class UserService {
         this.configuration = configuration;
     }
     
-    public UserResponseDto registerUser(UserDto userDto) throws Exception {
+    public UserResponseDTO registerUser(UserDTO userDto) throws Exception {
         if (userRepository.findUserByEmail(userDto.email()).isPresent()) {
             throw new UserAlreadyExistsException("User with this email already exists.");
         }
@@ -51,48 +53,49 @@ public class UserService {
         return authenticationService.authenticate(authenticated);
     }
 
-    public UserResponseDto getCurrentUser(Jwt principal){
+    public UserResponseDTO getCurrentUser(Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        return new UserResponseDto(user.getEmail(), principal.getTokenValue(), user.getUsername(), user.getBio(), user.getImage());
+        return new UserResponseDTO(user.getEmail(), principal.getTokenValue(), user.getUsername(), user.getBio(), user.getImage());
     }
     
     
-    public UserResponseDto updateUser(UserDto userDto, Jwt principal){
+    public UserResponseDTO updateUser(UserDTO userDto, Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User oldUser  = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (userDto.email() != null && !userDto.email().equals(oldUser.getEmail())) {
-            User existingUser = userRepository.findUserByEmail(userDto.email())
-                    .orElse(null);
-            if (existingUser != null && !existingUser.getId().equals(oldUser.getId())) {
-                throw new UserAlreadyExistsException("Email is already in use by another user");
-            }
+        Optional.ofNullable(userDto.email())
+                .filter(email -> !email.equals(oldUser.getEmail()))
+                .ifPresent(email -> {
+                    userRepository.findUserByEmail(email)
+                            .filter(user -> !user.getId().equals(oldUser.getId()))
+                            .ifPresent(user -> {
+                                throw new UserAlreadyExistsException("Email is already in use by another user");
+                            });
+                    oldUser.setEmail(email);
+                });
 
-            oldUser.setEmail(userDto.email());
-        }
+        Optional.ofNullable(userDto.username())
+                .filter(username -> !username.equals(oldUser.getUsername()))
+                .ifPresent(username -> {
+                    userRepository.findUserByUsername(username)
+                            .ifPresent(user -> {
+                                throw new UserAlreadyExistsException("Username is already in use by another user");
+                            });
+                    oldUser.setUsername(username);
+                });
 
-        if (userDto.username() != null && !userDto.username().equals(oldUser.getUsername())) {
-            userRepository.findUserByUsername(userDto.username())
-                    .orElseThrow(() -> new UserAlreadyExistsException("Username is already in use by another user"));
-            
-            oldUser.setUsername(userDto.username());
-        }
-        if (userDto.bio() != null) {
-            oldUser.setBio(userDto.bio());
-        }
-        if (userDto.image() != null) {
-            oldUser.setImage(userDto.image());
-        }
-        if (userDto.password() != null) {
-            oldUser.setPassword(passwordEncoder.encode(userDto.password()));
-        }
+        Optional.ofNullable(userDto.bio()).ifPresent(oldUser::setBio);
+        Optional.ofNullable(userDto.image()).ifPresent(oldUser::setImage);
+        Optional.ofNullable(userDto.password())
+                .map(passwordEncoder::encode)
+                .ifPresent(oldUser::setPassword);
         
         User updatedUser = userRepository.save(oldUser);
 
-        return new UserResponseDto(
+        return new UserResponseDTO(
                 updatedUser.getEmail(),
                 principal.getTokenValue(),
                 updatedUser.getUsername(),
@@ -131,7 +134,7 @@ public class UserService {
                 .anyMatch(user -> user.getId().equals(searchedUserId));
     }
 
-    public ProfileDto followUser(Jwt currentUserJwt, String followedUsername) {
+    public ProfileDTO followUser(Jwt currentUserJwt, String followedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
@@ -145,10 +148,10 @@ public class UserService {
         userRepository.save(followedUser);
         
         Boolean isFollowing = true;
-        return new ProfileDto(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
+        return new ProfileDTO(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
     }
 
-    public ProfileDto unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
+    public ProfileDTO unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
@@ -161,7 +164,7 @@ public class UserService {
         userRepository.save(currentUser);
         userRepository.save(unfollowedUser);
         Boolean isFollowing = false;
-        return new ProfileDto(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
+        return new ProfileDTO(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
     }
 
     public void save(User user) {

@@ -3,7 +3,7 @@ package com.conduit.application.dto.article;
 import java.time.Instant;
 import java.util.List;
 
-public record SingleArticleDto(String slug,
+public record SingleArticleDTO(String slug,
                                String title,
                                String description,
                                String body,
@@ -12,5 +12,5 @@ public record SingleArticleDto(String slug,
                                Instant updatedAt,
                                Boolean favorited,
                                int favoritesCount,
-                               AuthorDto author) {
+                               AuthorDTO author) {
 }
