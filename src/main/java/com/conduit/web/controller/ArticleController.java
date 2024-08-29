@@ -6,14 +6,9 @@ import com.conduit.application.service.ArticleService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
 
 @RestController
 public class ArticleController {
@@ -24,7 +19,7 @@ public class ArticleController {
     }
 
     @GetMapping("/articles")
-    public ArticlesResponseDto getArticles(@RequestParam(value = "tag", required = false)String tag,
+    public MultipleArticlesResponseDTO getArticles(@RequestParam(value = "tag", required = false)String tag,
                                            @RequestParam(value = "author", required = false) String author,
                                            @RequestParam(value = "favorited", required = false) String favorited,
                                            @RequestParam(value = "limit", defaultValue = "20") int limit,
@@ -36,27 +31,19 @@ public class ArticleController {
     }
     
     @PostMapping("/articles")
-    public ResponseEntity<Map<String, SingleArticleDTO>> createArticle(@RequestBody ArticleRequestDto articleRequestDto,
-                                                                       @AuthenticationPrincipal Jwt principal){
-        SingleArticleDTO articleDto = articleService.createArticle(articleRequestDto,principal);
-        
-        Map<String, SingleArticleDTO> response = new HashMap<>();
-        response.put("article", articleDto);
-        return ResponseEntity.ok(response);
+    public SingleArticleResponseDTO createArticle(@RequestBody ArticleRequestDTO articleRequestDto,
+                                            @AuthenticationPrincipal Jwt principal){
+        return articleService.createArticle(articleRequestDto,principal);
     }
     
     @GetMapping("/articles/{slug}")
-    public ResponseEntity<Map<String, SingleArticleDTO>> getArticleFromSlug(@PathVariable String slug,
-                                                                            @AuthenticationPrincipal Jwt principal){
-        SingleArticleDTO articleDto = articleService.getArticleFromSlug(slug,principal);
-        
-        Map<String, SingleArticleDTO> response = new HashMap<>();
-        response.put("article", articleDto);
-        return ResponseEntity.ok(response);
+    public SingleArticleResponseDTO getArticleFromSlug(@PathVariable String slug,
+                                                 @AuthenticationPrincipal Jwt principal){
+        return articleService.getArticleFromSlug(slug,principal);
     }
     
     @GetMapping("/articles/feed")
-    public ArticlesResponseDto getArticlesFeed(@RequestParam(value = "limit", defaultValue = "20") int limit,
+    public MultipleArticlesResponseDTO getArticlesFeed(@RequestParam(value = "limit", defaultValue = "20") int limit,
                                                @RequestParam(value = "offset", defaultValue = "0") int offset,
                                                @AuthenticationPrincipal Jwt principal){
         Pageable pageable = PageRequest.of(offset / limit, limit, 
@@ -66,14 +53,10 @@ public class ArticleController {
     }
     
     @PutMapping("/articles/{slug}")
-    public ResponseEntity<Map<String, SingleArticleDTO>> updateArticle(@PathVariable String slug,
-                                                                       UpdateArticleDTO updateArticleDto,
-                                                                       @AuthenticationPrincipal Jwt principal){
-        SingleArticleDTO updatedArticleDto = articleService.updateArticle(slug, updateArticleDto, principal);
-
-        Map<String, SingleArticleDTO> response = new HashMap<>();
-        response.put("article", updatedArticleDto);
-        return ResponseEntity.ok(response);
+    public SingleArticleResponseDTO updateArticle(@PathVariable String slug,
+                                            ArticleRequestDTO updateArticleDto,
+                                            @AuthenticationPrincipal Jwt principal){
+        return articleService.updateArticle(slug, updateArticleDto, principal);
     }
     
     @DeleteMapping("/articles/{slug}")
@@ -82,23 +65,15 @@ public class ArticleController {
     }
     
     @PostMapping("/articles/{slug}/favorite")
-    public ResponseEntity<Map<String, SingleArticleDTO>> favoriteArticle(@PathVariable String slug,
-                                                                         @AuthenticationPrincipal Jwt principal){
-        SingleArticleDTO articleDto = articleService.addFavoriteArticle(slug,principal);
-
-        Map<String, SingleArticleDTO> response = new HashMap<>();
-        response.put("article", articleDto);
-        return ResponseEntity.ok(response);
+    public SingleArticleResponseDTO favoriteArticle(@PathVariable String slug,
+                                              @AuthenticationPrincipal Jwt principal){
+        return articleService.addFavoriteArticle(slug,principal);
     }
 
     @DeleteMapping("/articles/{slug}/favorite")
-    public ResponseEntity<Map<String, SingleArticleDTO>> unfavoriteArticle(@PathVariable String slug,
-                                                                           @AuthenticationPrincipal Jwt principal){
-        SingleArticleDTO articleDto = articleService.deleteFavoriteArticle(slug,principal);
-
-        Map<String, SingleArticleDTO> response = new HashMap<>();
-        response.put("article", articleDto);
-        return ResponseEntity.ok(response);
+    public SingleArticleResponseDTO unfavoriteArticle(@PathVariable String slug,
+                                                @AuthenticationPrincipal Jwt principal){
+        return articleService.deleteFavoriteArticle(slug,principal);
     }
     
     

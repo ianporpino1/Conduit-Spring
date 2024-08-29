@@ -1,8 +1,7 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.profile.ProfileDTO;
-
-import com.conduit.application.dto.user.UserDTO;
+import com.conduit.application.dto.profile.ProfileResponseDTO;
+import com.conduit.application.dto.user.UserRequestDTO;
 import com.conduit.application.dto.user.UserResponseDTO;
 import com.conduit.application.exception.UserAlreadyExistsException;
 import com.conduit.application.exception.UserNotFoundException;
@@ -32,7 +31,7 @@ public class UserService {
         this.configuration = configuration;
     }
     
-    public UserResponseDTO registerUser(UserDTO userDto) throws Exception {
+    public UserResponseDTO registerUser(UserRequestDTO userDto) throws Exception {
         if (userRepository.findUserByEmail(userDto.email()).isPresent()) {
             throw new UserAlreadyExistsException("User with this email already exists.");
         }
@@ -61,7 +60,7 @@ public class UserService {
     }
     
     
-    public UserResponseDTO updateUser(UserDTO userDto, Jwt principal){
+    public UserResponseDTO updateUser(UserRequestDTO userDto, Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User oldUser  = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
@@ -134,7 +133,7 @@ public class UserService {
                 .anyMatch(user -> user.getId().equals(searchedUserId));
     }
 
-    public ProfileDTO followUser(Jwt currentUserJwt, String followedUsername) {
+    public ProfileResponseDTO followUser(Jwt currentUserJwt, String followedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
@@ -148,10 +147,10 @@ public class UserService {
         userRepository.save(followedUser);
         
         Boolean isFollowing = true;
-        return new ProfileDTO(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
+        return new ProfileResponseDTO(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
     }
 
-    public ProfileDTO unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
+    public ProfileResponseDTO unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
@@ -164,7 +163,7 @@ public class UserService {
         userRepository.save(currentUser);
         userRepository.save(unfollowedUser);
         Boolean isFollowing = false;
-        return new ProfileDTO(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
+        return new ProfileResponseDTO(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
     }
 
     public void save(User user) {

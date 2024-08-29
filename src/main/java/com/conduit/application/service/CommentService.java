@@ -1,7 +1,7 @@
 package com.conduit.application.service;
 
-import com.conduit.application.dto.comment.CommentDTO;
 import com.conduit.application.dto.comment.CommentRequestDTO;
+import com.conduit.application.dto.comment.CommentResponseDTO;
 import com.conduit.application.dto.comment.MultipleCommentsResponseDTO;
 import com.conduit.application.dto.comment.SingleCommentResponseDTO;
 import com.conduit.application.exception.CommentNotFoundException;
@@ -35,7 +35,9 @@ public class CommentService {
     }
 
     @Transactional
-    public SingleCommentResponseDTO createComment(String slug, CommentRequestDTO commentRequestDTO, Jwt currentUserJwt){
+    public SingleCommentResponseDTO createComment(String slug, 
+                                                  CommentRequestDTO commentRequestDTO, 
+                                                  Jwt currentUserJwt){
         if(commentRequestDTO.body().isBlank()){
             throw new InvalidInputException("comment cannot be empty");
         }
@@ -57,16 +59,16 @@ public class CommentService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        CommentDTO commentDTO = convertCommentToDTO(savedComment, currentUserId);
+        CommentResponseDTO commentDTO = convertCommentToDTO(savedComment, currentUserId);
         
         return new SingleCommentResponseDTO(commentDTO);
     }
     
-    private CommentDTO convertCommentToDTO(Comment comment, Long currentUserId){
+    private CommentResponseDTO convertCommentToDTO(Comment comment, Long currentUserId){
         boolean isFollowing = currentUserId != null && comment.getAuthor().getFollowedBy().stream()
                 .anyMatch(follower -> follower.getId().equals(currentUserId));
         
-        return new CommentDTO(
+        return new CommentResponseDTO(
                 comment.getId(),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),
@@ -80,7 +82,7 @@ public class CommentService {
                 .map(authenticationService::extractUserId)
                 .orElse(null);
         
-        List<CommentDTO> commentDTOS =  articleService.findArticleBySlug(slug).getComments().stream()
+        List<CommentResponseDTO> commentDTOS =  articleService.findArticleBySlug(slug).getComments().stream()
                 .map(comment -> convertCommentToDTO(comment, currentUserId))
                 .toList();
         return new MultipleCommentsResponseDTO(commentDTOS);

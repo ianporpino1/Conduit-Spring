@@ -1,5 +1,6 @@
 package com.conduit.application.dto.user;
 
+
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -8,9 +9,10 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
 @JsonTypeInfo(include = WRAPPER_OBJECT, use = NAME)
 @JsonTypeName("user")
-public record UserResponseDTO(String email, 
-                              String token, 
-                              String username, 
-                              String bio, 
-                              String image) {
-}
+public record UserRequestDTO(
+        String username,
+        String email,
+        String password,
+        String bio,
+        String image
+) {}

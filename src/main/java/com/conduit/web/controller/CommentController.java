@@ -1,6 +1,6 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.comment.CommentRequestWrapperDTO;
+import com.conduit.application.dto.comment.CommentRequestDTO;
 import com.conduit.application.dto.comment.MultipleCommentsResponseDTO;
 import com.conduit.application.dto.comment.SingleCommentResponseDTO;
 import com.conduit.application.service.CommentService;
@@ -18,9 +18,9 @@ public class CommentController {
 
     @PostMapping("/articles/{slug}/comments")
     public SingleCommentResponseDTO createComment(@PathVariable String slug,
-                                                  @RequestBody CommentRequestWrapperDTO commentRequestDTO, 
+                                                  @RequestBody CommentRequestDTO commentRequestDTO, 
                                                   @AuthenticationPrincipal Jwt principal){
-        return commentService.createComment(slug, commentRequestDTO.comment(),principal);
+        return commentService.createComment(slug, commentRequestDTO,principal);
     }
     @GetMapping("/articles/{slug}/comments")
     public MultipleCommentsResponseDTO getAllComments(@PathVariable String slug,
