@@ -54,7 +54,7 @@ public class ArticleController {
     
     @PutMapping("/articles/{slug}")
     public SingleArticleResponseDTO updateArticle(@PathVariable String slug,
-                                            ArticleRequestDTO updateArticleDto,
+                                                  @RequestBody ArticleRequestDTO updateArticleDto,
                                             @AuthenticationPrincipal Jwt principal){
         return articleService.updateArticle(slug, updateArticleDto, principal);
     }
