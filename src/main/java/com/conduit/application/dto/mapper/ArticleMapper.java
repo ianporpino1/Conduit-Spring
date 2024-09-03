@@ -10,11 +10,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class ArticleMapper {
 
-    public ArticleResponseDTO toDto(Article article, Long currentUserId) {
-        boolean isFavorited = article.getFavoritedBy().stream()
-                .anyMatch(user -> user.getId().equals(currentUserId));
-        boolean isFollowing = article.getAuthor().getFollowedBy().stream()
-                .anyMatch(follower -> follower.getId().equals(currentUserId));
+    public ArticleResponseDTO toDto(Article article, User currentUser) {
+        boolean isFavorited = false;
+        boolean isFollowing = false;
+
+        if (currentUser != null) {
+            isFavorited = article.getFavoritedBy().stream()
+                    .anyMatch(user -> user.equals(currentUser));
+            isFollowing = currentUser.getFollowing().stream()
+                    .anyMatch(following -> following.equals(article.getAuthor()));
+        }
 
         return new ArticleResponseDTO(
                 article.getSlug(),

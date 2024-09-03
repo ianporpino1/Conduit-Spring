@@ -42,12 +42,14 @@ public class ArticleService {
         
         Long totalArticlesCount = articleRepository.countArticles(tag, author, favorited);
 
-        Long currentUserId = Optional.ofNullable(currentUserJwt)
+        User currentUser = Optional.ofNullable(currentUserJwt)
                 .map(authenticationService::extractUserId)
+                .map(userService::getUserById)
                 .orElse(null);
+        
 
         List<ArticleResponseDTO> multipleArticlesDTOS = articlesPage.getContent().stream()
-                .map(article -> articleMapper.toDto(article,currentUserId))
+                .map(article -> articleMapper.toDto(article,currentUser))
                 .toList();
         
         return new MultipleArticlesResponseDTO(multipleArticlesDTOS, totalArticlesCount);
@@ -82,7 +84,7 @@ public class ArticleService {
         
         Article savedArticle = articleRepository.save(newArticle);
 
-        return new SingleArticleResponseDTO(articleMapper.toDto(savedArticle, currentUserId));
+        return new SingleArticleResponseDTO(articleMapper.toDto(savedArticle, user));
     }
 
     private String createSlug(String title) {
@@ -97,14 +99,15 @@ public class ArticleService {
     @Transactional(readOnly = true)
     public MultipleArticlesResponseDTO getArticlesFeed(Jwt currentUserJwt, Pageable pageable) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
-        List<Long> followingIds = userService.getFollowing(currentUserId).stream().map(User::getId).toList();
+        User user = userService.getUserById(currentUserId);
+        List<Long> followingIds = user.getFollowing().stream().map(User::getId).toList();
 
         Page<Article> articlesPage = articleRepository.findArticlesByFollowingUsersIds(followingIds, pageable);
         
         Long articlesCount = articleRepository.countArticlesByFollowingUsers(followingIds);
 
         List<ArticleResponseDTO> multipleArticlesDTOS = articlesPage.getContent().stream()
-                .map(article -> articleMapper.toDto(article, currentUserId))
+                .map(article -> articleMapper.toDto(article, user))
                 .toList();
 
         return new MultipleArticlesResponseDTO(multipleArticlesDTOS, articlesCount);
@@ -115,13 +118,14 @@ public class ArticleService {
         Article oldArticle = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
+        User user = userService.getUserById(currentUserId);
         if(!Objects.equals(oldArticle.getAuthor().getId(), currentUserId)){
             throw new UnauthorizedArticleException("User is not the author of this article");
         }
         
         oldArticle.update(updateArticleDto.title(), updateArticleDto.description(), updateArticleDto.body());
 //        articleRepository.save(oldArticle);
-        return new SingleArticleResponseDTO(articleMapper.toDto(oldArticle,currentUserId));
+        return new SingleArticleResponseDTO(articleMapper.toDto(oldArticle,user));
     }
     
     
@@ -129,10 +133,11 @@ public class ArticleService {
         Article article = articleRepository.findArticleBySlug(slug)
                 .orElseThrow(ArticleNotFoundException::new);
 
-        Long currentUserId = Optional.ofNullable(currentUserJwt)
+        User currentUser = Optional.ofNullable(currentUserJwt)
                 .map(authenticationService::extractUserId)
+                .map(userService::getUserById)
                 .orElse(null);
-        return new SingleArticleResponseDTO(articleMapper.toDto(article,currentUserId));
+        return new SingleArticleResponseDTO(articleMapper.toDto(article,currentUser));
     }
     
     @Transactional
@@ -162,7 +167,7 @@ public class ArticleService {
         articleToBeFavorited.addFavorite(currentUser);
 //        articleRepository.save(articleToBeFavorited); //nao eh necessario, JPA ja cuida da atualizacao automatica
         
-        return new SingleArticleResponseDTO(articleMapper.toDto(articleToBeFavorited, currentUserId));
+        return new SingleArticleResponseDTO(articleMapper.toDto(articleToBeFavorited, currentUser));
     }
     
     @Transactional
@@ -178,7 +183,7 @@ public class ArticleService {
         }
         articleToBeUnfavorited.removeFavorite(currentUser);
 
-        return new SingleArticleResponseDTO(articleMapper.toDto(articleToBeUnfavorited, currentUserId));
+        return new SingleArticleResponseDTO(articleMapper.toDto(articleToBeUnfavorited, currentUser));
     }
 
     public Article findArticleBySlug(String slug){

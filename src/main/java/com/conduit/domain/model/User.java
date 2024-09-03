@@ -24,13 +24,6 @@ public class User {
     @Column(unique = true, length = 100, nullable = false)
     private String username;
     
-    @ManyToMany
-    @JoinTable(
-            name = "users_followed_by",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "followed_by_id")
-    )
-    private List<User> followedBy;
     
     @ManyToMany
     @JoinTable(

@@ -7,6 +7,7 @@ import com.conduit.application.exception.UserAlreadyExistsException;
 import com.conduit.application.exception.UserNotFoundException;
 import com.conduit.domain.model.User;
 import com.conduit.domain.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
@@ -113,17 +114,13 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    public List<User> getFollowing(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        return user.getFollowing();
-    }
+//    public List<User> getFollowing(Long userId) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(UserNotFoundException::new);
+//        return user.getFollowing();
+//    }
 
-    public List<User> getFollowedBy(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        return user.getFollowedBy();
-    }
+ 
 
     public boolean isFollowing(Jwt currentUserJwt, Long searchedUserId) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
@@ -132,7 +129,7 @@ public class UserService {
         return currentUser.getFollowing().stream()
                 .anyMatch(user -> user.getId().equals(searchedUserId));
     }
-
+    @Transactional
     public ProfileResponseDTO followUser(Jwt currentUserJwt, String followedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
@@ -141,15 +138,13 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User to follow not found"));
 
         currentUser.getFollowing().add(followedUser);
-        followedUser.getFollowedBy().add(currentUser);
 
-        userRepository.save(currentUser);
-        userRepository.save(followedUser);
+        
         
         Boolean isFollowing = true;
         return new ProfileResponseDTO(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
     }
-
+    @Transactional
     public ProfileResponseDTO unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
@@ -158,10 +153,8 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User to unfollow not found"));
 
         currentUser.getFollowing().remove(unfollowedUser);
-        unfollowedUser.getFollowedBy().remove(currentUser);
-
-        userRepository.save(currentUser);
-        userRepository.save(unfollowedUser);
+        
+        
         Boolean isFollowing = false;
         return new ProfileResponseDTO(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
     }

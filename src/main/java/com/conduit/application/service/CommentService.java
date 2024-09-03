@@ -65,7 +65,7 @@ public class CommentService {
     }
     
     private CommentResponseDTO convertCommentToDTO(Comment comment, Long currentUserId){
-        boolean isFollowing = currentUserId != null && comment.getAuthor().getFollowedBy().stream()
+        boolean isFollowing = currentUserId != null && comment.getAuthor().getFollowing().stream()
                 .anyMatch(follower -> follower.getId().equals(currentUserId));
         
         return new CommentResponseDTO(
