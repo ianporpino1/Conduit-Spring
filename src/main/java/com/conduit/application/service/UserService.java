@@ -145,8 +145,6 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         currentUser.getFollowings().removeIf(following -> following.getFolloweeId().equals(userToUnfollow.getId()));
-        
-        System.out.println(currentUser.getFollowings().isEmpty());
 
         userRepository.save(currentUser);
 
