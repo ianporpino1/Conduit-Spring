@@ -16,15 +16,15 @@ public class ProfileService {
     }
 
 
-    public ProfileResponseDTO getProfile(String searchedUsername, Jwt currentUserJwt){
-        User searchedUser = userService.getUserByUsername(searchedUsername);
-
-        boolean isFollowing = Optional.ofNullable(currentUserJwt)
-                .map(jwt -> userService.isFollowing(currentUserJwt, searchedUser.getId()))
-                .orElse(false);
-
-        return new ProfileResponseDTO(searchedUser.getUsername(), searchedUser.getBio(), searchedUser.getImage(), isFollowing);
-    }
+//    public ProfileResponseDTO getProfile(String searchedUsername, Jwt currentUserJwt){
+//        User searchedUser = userService.getUserByUsername(searchedUsername);
+//
+//        boolean isFollowing = Optional.ofNullable(currentUserJwt)
+//                .map(jwt -> userService.isFollowing(currentUserJwt, searchedUser.getId()))
+//                .orElse(false);
+//
+//        return new ProfileResponseDTO(searchedUser.getUsername(), searchedUser.getBio(), searchedUser.getImage(), isFollowing);
+//    }
 
 
     public ProfileResponseDTO followUserProfile(Jwt currentUserJwt, String usernameToBeFollowed) {

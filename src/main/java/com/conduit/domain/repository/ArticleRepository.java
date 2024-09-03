@@ -1,50 +1,37 @@
 package com.conduit.domain.repository;
 
 import com.conduit.domain.model.Article;
+import com.conduit.domain.model.ArticleTag;
+import com.conduit.domain.model.UserFavoriteArticle;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
+
 
 @Repository
-public interface ArticleRepository extends JpaRepository<Article, Long> {
+public interface ArticleRepository extends PagingAndSortingRepository<Article, Long>, 
+                                            ListCrudRepository<Article,Long> {
 
-    @Query("SELECT DISTINCT a FROM Article a " +
-            "LEFT JOIN a.tagList t " +
-            "LEFT JOIN a.favoritedBy u " +
-            "WHERE (:tag IS NULL OR t.name = :tag) " +
-            "AND (:author IS NULL OR a.author.username = :author) " +
-            "AND (:favorited IS NULL OR EXISTS (SELECT 1 FROM a.favoritedBy f WHERE f.username = :favorited)) " +
-            "ORDER BY a.createdAt DESC")
-    Page<Article> findArticles(@Param("tag") String tag,
-                               @Param("author") String author,
-                               @Param("favorited") String favorited,
-                               Pageable pageable);
-
-    @Query("SELECT COUNT(DISTINCT a) FROM Article a " +
-            "LEFT JOIN a.tagList t " +
-            "LEFT JOIN a.favoritedBy f " +
-            "WHERE (:tag IS NULL OR t.name = :tag) " +
-            "AND (:author IS NULL OR a.author.username = :author) " +
-            "AND (:favorited IS NULL OR EXISTS (SELECT 1 FROM a.favoritedBy f2 WHERE f2.username = :favorited))")
-    Long countArticles(@Param("tag") String tag,
-                       @Param("author") String author,
-                       @Param("favorited") String favorited);
-
-    @Query("SELECT COUNT(a) FROM Article a WHERE a.author.id IN :authorIds")
-    Long countArticlesByFollowingUsers(@Param("authorIds") List<Long> authorIds);
-
-
-    @Query("SELECT a FROM Article a WHERE a.author.id IN :authorIds ORDER BY a.createdAt DESC")
-    Page<Article> findArticlesByFollowingUsersIds(@Param("authorIds") List<Long> authorIds, Pageable pageable);
-    
-    Optional<Article> findArticleBySlug(String slug);
-
-    Optional<Article> findBySlug(String slug);
+    @Query("SELECT DISTINCT a.* FROM articles a " +
+            "LEFT JOIN article_tags at ON a.id = at.article_id " +
+            "LEFT JOIN tags t ON at.tag_id = t.id " +
+            "LEFT JOIN user_favorites_articles uf ON a.id = uf.article_id " +
+            "LEFT JOIN users u ON uf.user_id = u.id " +
+            "WHERE (:tagId IS NULL OR t.id = :tagId) " +
+            "AND (:authorId IS NULL OR a.author_id = :authorId) " +
+            "AND (:favoritedId IS NULL OR EXISTS (SELECT 1 FROM user_favorites_articles uf WHERE uf.user_id = :favoritedId)) " +
+            "ORDER BY a.created_at DESC " +
+            "LIMIT :limit OFFSET :offset")
+    List<Article> findAllArticlesByFilters(@Param("tagId") Long tagId,
+                               @Param("authorId") Long authorId,
+                               @Param("favoritedId") Long favoritedId,
+                               @Param("limit") int limit,
+                               @Param("offset") int offset);
     
 }

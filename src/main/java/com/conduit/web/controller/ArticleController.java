@@ -1,80 +1,63 @@
 package com.conduit.web.controller;
 
-import com.conduit.application.dto.article.*;
-import com.conduit.application.service.ArticleService;
+import com.conduit.domain.model.Article;
+import com.conduit.domain.model.Tag;
+import com.conduit.domain.model.User;
+import com.conduit.domain.repository.ArticleRepository;
+import com.conduit.domain.repository.TagRepository;
+import com.conduit.domain.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class ArticleController {
-    private  final ArticleService articleService;
 
-    public ArticleController(ArticleService articleService) {
-        this.articleService = articleService;
-    }
+    @Autowired
+    private ArticleRepository articleRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private TagRepository tagRepository;
 
     @GetMapping("/articles")
-    public MultipleArticlesResponseDTO getArticles(@RequestParam(value = "tag", required = false)String tag,
-                                           @RequestParam(value = "author", required = false) String author,
-                                           @RequestParam(value = "favorited", required = false) String favorited,
-                                           @RequestParam(value = "limit", defaultValue = "20") int limit,
-                                           @RequestParam(value = "offset", defaultValue = "0") int offset,
-                                           @AuthenticationPrincipal Jwt principal) {
-        Pageable pageable = PageRequest.of(offset / limit, limit, Sort.by(Sort.Order.desc("createdAt")));
-        
-        return articleService.listArticles(tag, author, favorited, pageable, principal);
-    }
-    
-    @PostMapping("/articles")
-    public SingleArticleResponseDTO createArticle(@RequestBody ArticleRequestDTO articleRequestDto,
-                                            @AuthenticationPrincipal Jwt principal){
-        return articleService.createArticle(articleRequestDto,principal);
-    }
-    
-    @GetMapping("/articles/{slug}")
-    public SingleArticleResponseDTO getArticleFromSlug(@PathVariable String slug,
-                                                 @AuthenticationPrincipal Jwt principal){
-        return articleService.getArticleFromSlug(slug,principal);
-    }
-    
-    @GetMapping("/articles/feed")
-    public MultipleArticlesResponseDTO getArticlesFeed(@RequestParam(value = "limit", defaultValue = "20") int limit,
-                                               @RequestParam(value = "offset", defaultValue = "0") int offset,
-                                               @AuthenticationPrincipal Jwt principal){
-        Pageable pageable = PageRequest.of(offset / limit, limit, 
-                Sort.by(Sort.Order.desc("createdAt")));
-        
-        return articleService.getArticlesFeed(principal,pageable);
-    }
-    
-    @PutMapping("/articles/{slug}")
-    public SingleArticleResponseDTO updateArticle(@PathVariable String slug,
-                                                  @RequestBody ArticleRequestDTO updateArticleDto,
-                                            @AuthenticationPrincipal Jwt principal){
-        return articleService.updateArticle(slug, updateArticleDto, principal);
-    }
-    
-    @DeleteMapping("/articles/{slug}")
-    public void deleteArticle(@PathVariable String slug, @AuthenticationPrincipal Jwt principal){
-        articleService.deleteArticle(slug, principal);
-    }
-    
-    @PostMapping("/articles/{slug}/favorite")
-    public SingleArticleResponseDTO favoriteArticle(@PathVariable String slug,
-                                              @AuthenticationPrincipal Jwt principal){
-        return articleService.addFavoriteArticle(slug,principal);
-    }
+    public List<Article> listArticles(
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String favorited,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
 
-    @DeleteMapping("/articles/{slug}/favorite")
-    public SingleArticleResponseDTO unfavoriteArticle(@PathVariable String slug,
-                                                @AuthenticationPrincipal Jwt principal){
-        return articleService.deleteFavoriteArticle(slug,principal);
+        Long authorId = null;
+        Long tagId = null;
+
+        if (author != null) {
+            Optional<User> userOpt = userRepository.findUserByUsername(author);
+            if (userOpt.isPresent()) {
+                authorId = userOpt.get().getId();
+            } else {
+                // Tratar o caso onde o usuário não é encontrado
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            }
+        }
+
+        if (tag != null) {
+            Optional<Tag> tagOpt = tagRepository.findByName(tag);
+            if (tagOpt.isPresent()) {
+                tagId = tagOpt.get().getId();
+            } else {
+                // Tratar o caso onde a tag não é encontrada
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag not found");
+            }
+        }
+        
+
+        return articleRepository.findAllArticlesByFilters(tagId, authorId, null, limit, offset);
     }
-    
-    
 }

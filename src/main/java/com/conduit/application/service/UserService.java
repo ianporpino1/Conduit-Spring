@@ -6,6 +6,7 @@ import com.conduit.application.dto.user.UserResponseDTO;
 import com.conduit.application.exception.UserAlreadyExistsException;
 import com.conduit.application.exception.UserNotFoundException;
 import com.conduit.domain.model.User;
+import com.conduit.domain.model.UserFollowing;
 import com.conduit.domain.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -14,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,7 +30,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.configuration = configuration;
     }
-    
+
     public UserResponseDTO registerUser(UserRequestDTO userDto) throws Exception {
         if (userRepository.findUserByEmail(userDto.email()).isPresent()) {
             throw new UserAlreadyExistsException("User with this email already exists.");
@@ -38,14 +38,14 @@ public class UserService {
         if (userRepository.findUserByUsername(userDto.username()).isPresent()) {
             throw new UserAlreadyExistsException("User with this username already exists.");
         }
-        
+
         User user = new User();
         user.setUsername(userDto.username());
         user.setEmail(userDto.email());
         user.setPassword(passwordEncoder.encode(userDto.password()));
 
         userRepository.save(user);
-        
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDto.email(), userDto.password());
         Authentication authenticated = configuration.getAuthenticationManager().authenticate(authentication);
 
@@ -58,8 +58,8 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
         return new UserResponseDTO(user.getEmail(), principal.getTokenValue(), user.getUsername(), user.getBio(), user.getImage());
     }
-    
-    
+
+
     public UserResponseDTO updateUser(UserRequestDTO userDto, Jwt principal){
         Long userId = authenticationService.extractUserId(principal);
         User oldUser  = userRepository.findById(userId)
@@ -91,7 +91,7 @@ public class UserService {
         Optional.ofNullable(userDto.password())
                 .map(passwordEncoder::encode)
                 .ifPresent(oldUser::setPassword);
-        
+
         User updatedUser = userRepository.save(oldUser);
 
         return new UserResponseDTO(
@@ -102,7 +102,6 @@ public class UserService {
                 updatedUser.getImage()
         );
     }
-    
     public User getUserByUsername(String username){
         return userRepository.findUserByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
@@ -112,61 +111,45 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
     }
+    
+//    public boolean isFollowing(Jwt currentUserJwt, Long searchedUserId) {
+//        Long currentUserId = authenticationService.extractUserId(currentUserJwt);
+//        
+//        
+//    }
+    
 
-    public List<User> getFollowing(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        return user.getFollowing();
-    }
-
-    public List<User> getFollowedBy(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        return user.getFollowedBy();
-    }
-
-    public boolean isFollowing(Jwt currentUserJwt, Long searchedUserId) {
+    public ProfileResponseDTO followUser(Jwt currentUserJwt, String usernameToFollow) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
-        return currentUser.getFollowing().stream()
-                .anyMatch(user -> user.getId().equals(searchedUserId));
-    }
 
-    public ProfileResponseDTO followUser(Jwt currentUserJwt, String followedUsername) {
-        Long currentUserId = authenticationService.extractUserId(currentUserJwt);
-        User currentUser = userRepository.findById(currentUserId)
+        User userToFollow = userRepository.findUserByUsername(usernameToFollow)
                 .orElseThrow(UserNotFoundException::new);
-        User followedUser = userRepository.findUserByUsername(followedUsername)
-                .orElseThrow(() -> new UserNotFoundException("User to follow not found"));
-
-        currentUser.getFollowing().add(followedUser);
-        followedUser.getFollowedBy().add(currentUser);
-
-        userRepository.save(currentUser);
-        userRepository.save(followedUser);
         
-        Boolean isFollowing = true;
-        return new ProfileResponseDTO(followedUser.getUsername(), followedUser.getBio(), followedUser.getImage(), isFollowing);
+        UserFollowing newFollowing = UserFollowing.of(userToFollow.getId());
+        currentUser.getFollowings().add(newFollowing);
+
+        userRepository.save(currentUser);
+        
+        return new ProfileResponseDTO(userToFollow.getUsername(),userToFollow.getBio(),userToFollow.getImage(),true);
     }
 
-    public ProfileResponseDTO unfollowUser(Jwt currentUserJwt, String unfollowedUsername) {
+
+    public ProfileResponseDTO unfollowUser(Jwt currentUserJwt, String usernameToBeUnfollowed) {
         Long currentUserId = authenticationService.extractUserId(currentUserJwt);
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UserNotFoundException::new);
-        User unfollowedUser = userRepository.findUserByUsername(unfollowedUsername)
-                .orElseThrow(() -> new UserNotFoundException("User to unfollow not found"));
 
-        currentUser.getFollowing().remove(unfollowedUser);
-        unfollowedUser.getFollowedBy().remove(currentUser);
+        User userToUnfollow = userRepository.findUserByUsername(usernameToBeUnfollowed)
+                .orElseThrow(UserNotFoundException::new);
+
+        currentUser.getFollowings().removeIf(following -> following.getFolloweeId().equals(userToUnfollow.getId()));
+        
+        System.out.println(currentUser.getFollowings().isEmpty());
 
         userRepository.save(currentUser);
-        userRepository.save(unfollowedUser);
-        Boolean isFollowing = false;
-        return new ProfileResponseDTO(unfollowedUser.getUsername(), unfollowedUser.getBio(), unfollowedUser.getImage(), isFollowing);
-    }
 
-    public void save(User user) {
-        userRepository.save(user);
+        return new ProfileResponseDTO(userToUnfollow.getUsername(),userToUnfollow.getBio(),userToUnfollow.getImage(),false);
     }
 }

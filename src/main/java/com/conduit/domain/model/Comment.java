@@ -1,35 +1,29 @@
 package com.conduit.domain.model;
 
-import jakarta.persistence.*;
+
+
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
 @Data
-@Entity
+@Table(name = "comments")
 public class Comment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
     private Instant updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "article_id")
-    private Article article;
     
-    @ManyToOne
-    @JoinColumn(name = "author_id")
-    private User author;
+    private Long authorId;
 
     private String body;
 }

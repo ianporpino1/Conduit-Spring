@@ -15,21 +15,21 @@ public class ProfileController {
         this.profileService = profileService;
     }
 
-    @GetMapping("/{username}")
-    public ProfileResponseDTO getProfile(@AuthenticationPrincipal Jwt principal,
-                                         @PathVariable String username){
-        return profileService.getProfile(username, principal);
-    }
-    
+//    @GetMapping("/{username}")
+//    public ProfileResponseDTO getProfile(@AuthenticationPrincipal Jwt principal,
+//                                         @PathVariable String username){
+//        return profileService.getProfile(username, principal);
+//    }
+//
     @PostMapping("/{usernameToFollow}/follow")
     public ProfileResponseDTO followUserProfile(@AuthenticationPrincipal Jwt principal,
-                                                                     @PathVariable String usernameToFollow){
+                                                @PathVariable String usernameToFollow){
         return profileService.followUserProfile(principal, usernameToFollow);
     }
-    
+
     @DeleteMapping("/{usernameToUnfollow}/follow")
     public ProfileResponseDTO unfollowUserProfile(@AuthenticationPrincipal Jwt principal,
-                                                                       @PathVariable String usernameToUnfollow){
+                                                  @PathVariable String usernameToUnfollow){
         return profileService.unfollowUserProfile(principal, usernameToUnfollow);
     }
 }

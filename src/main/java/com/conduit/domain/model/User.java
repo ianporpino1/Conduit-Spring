@@ -1,50 +1,28 @@
 package com.conduit.domain.model;
 
-import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-@Entity
+
 @Data
 @NoArgsConstructor
 @Table(name = "users")
 public class User {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(unique = true, length = 100, nullable = false)
     private String email;
-    
     private  String password;
-
-    @Column(unique = true, length = 100, nullable = false)
     private String username;
-    
-    @ManyToMany
-    @JoinTable(
-            name = "users_followed_by",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "followed_by_id")
-    )
-    private List<User> followedBy;
-    
-    @ManyToMany
-    @JoinTable(
-            name = "users_following",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "following_id")
-    )
-    private List<User> following;
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments;
-
-    @ManyToMany(mappedBy = "favoritedBy")
-    private List<Article> favoritedArticles;
+    @MappedCollection(idColumn = "user_id", keyColumn = "followee_id")
+    private Set<UserFollowing> followings = new HashSet<>();
     
     private String bio;
     

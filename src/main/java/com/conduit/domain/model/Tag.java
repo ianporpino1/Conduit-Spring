@@ -1,21 +1,19 @@
 package com.conduit.domain.model;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.List;
 
-@Entity
+
 @Data
+@Table("tags")
 public class Tag {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-
-    @ManyToMany(mappedBy = "tagList")
-    private List<Article> articles;
     
 }

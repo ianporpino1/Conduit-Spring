@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    bio TEXT,
+    image TEXT
+);
+
+CREATE TABLE IF NOT EXISTS articles (
+    id SERIAL PRIMARY KEY,
+    author_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    body TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+CREATE TABLE IF NOT EXISTS user_following (
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    followee_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, followee_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_favorites_articles (
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    article_id BIGINT REFERENCES articles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, article_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    author_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    article_id BIGINT REFERENCES articles(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE IF NOT EXISTS article_tags (
+    article_id BIGINT REFERENCES articles(id) ON DELETE CASCADE,
+    tag_id BIGINT REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (article_id, tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+

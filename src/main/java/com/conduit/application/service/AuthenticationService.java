@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthenticationService {
     private final JwtService jwtService;
-    
+
     public AuthenticationService(JwtService jwtService) {
         this.jwtService = jwtService;
-        
+
     }
     public UserResponseDTO authenticate(Authentication authentication) {
         UserAuthenticated UserAuthenticated  = (com.conduit.infrastructure.security.UserAuthenticated) authentication.getPrincipal();
@@ -27,5 +27,5 @@ public class AuthenticationService {
     public Long extractUserId(Jwt principal) {
         return jwtService.extractUserId(principal);
     }
-    
+
 }
