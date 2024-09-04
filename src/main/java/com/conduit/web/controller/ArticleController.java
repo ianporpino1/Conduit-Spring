@@ -8,6 +8,7 @@ import com.conduit.domain.repository.TagRepository;
 import com.conduit.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ public class ArticleController {
     private TagRepository tagRepository;
 
     @GetMapping("/articles")
+    @Transactional(readOnly = true)
     public List<Article> listArticles(
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String author,
