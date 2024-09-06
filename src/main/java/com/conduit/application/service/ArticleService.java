@@ -40,19 +40,16 @@ public class ArticleService {
     public MultipleArticlesResponseDTO listArticles(String tag, String author, String favorited, Pageable pageable, Jwt currentUserJwt) {
         Page<Article> articlesPage = articleRepository.findArticles(tag, author, favorited, pageable);
         
-        Long totalArticlesCount = articleRepository.countArticles(tag, author, favorited);
-
         User currentUser = Optional.ofNullable(currentUserJwt)
                 .map(authenticationService::extractUserId)
                 .map(userService::getUserById)
                 .orElse(null);
-        
 
         List<ArticleResponseDTO> multipleArticlesDTOS = articlesPage.getContent().stream()
                 .map(article -> articleMapper.toDto(article,currentUser))
                 .toList();
         
-        return new MultipleArticlesResponseDTO(multipleArticlesDTOS, totalArticlesCount);
+        return new MultipleArticlesResponseDTO(multipleArticlesDTOS, articlesPage.getTotalElements());
     }
     
     @Transactional

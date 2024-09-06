@@ -25,16 +25,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
                                @Param("author") String author,
                                @Param("favorited") String favorited,
                                Pageable pageable);
-
-    @Query("SELECT COUNT(DISTINCT a) FROM Article a " +
-            "LEFT JOIN a.tagList t " +
-            "LEFT JOIN a.favoritedBy f " +
-            "WHERE (:tag IS NULL OR t.name = :tag) " +
-            "AND (:author IS NULL OR a.author.username = :author) " +
-            "AND (:favorited IS NULL OR EXISTS (SELECT 1 FROM a.favoritedBy f2 WHERE f2.username = :favorited))")
-    Long countArticles(@Param("tag") String tag,
-                       @Param("author") String author,
-                       @Param("favorited") String favorited);
+    
 
     @Query("SELECT COUNT(a) FROM Article a WHERE a.author.id IN :authorIds")
     Long countArticlesByFollowingUsers(@Param("authorIds") List<Long> authorIds);
